@@ -2,6 +2,7 @@
 var trex ,trex_running;
 var suelo;
 var ImagenSuelo;
+var SInvisible;
 function preload(){
   trex_running = loadAnimation("trex1.png","trex3.png","trex4.png")
   ImagenSuelo = loadImage("ground2.png");
@@ -29,6 +30,7 @@ function draw(){
     suelo.x = suelo.width / 2;
   }
   trex.collide(suelo);
+  SInvisble.visible = false;
 
   drawSprites()
 }
