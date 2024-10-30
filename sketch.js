@@ -1,13 +1,13 @@
 var trex ,trex_running, trex_colision;
-var ImagenSuelo;
+var suelo,ImagenSuelo;
 var sueloInvisible;
 var nube, ImagenNube;
-var obstaculo, obstacle1, obstacle2, obstacle3, obstacle4, obstacle5, obstacle6;
-var score = 0;
-var PLAY = 1;
-var END = 0;
-var gameState = PLAY;
-var obstaclesGroup, cloudsGroup;
+var obstaculo, obs1, obs2, obs3, obs4, obs5, obs6;
+var puntos = 0;
+var JUGAR = 1;
+var FIN = 0;
+var EstadoJuego = JUGAR;
+var GrupoObstaculos, GrupoNubes;
 var restart, restartImg, gameOver, gameOverImg;
 var jumpSound, dieSound, checkSound;
 function preload(){ //funcion para precargar archivos(imagenes, audio y videos)
@@ -15,12 +15,12 @@ function preload(){ //funcion para precargar archivos(imagenes, audio y videos)
   ImagenSuelo = loadImage("ground2.png");
   ImagenNube = loadImage("cloud.png");
 
-  obstacle1 = loadImage("obstacle1.png");
-  obstacle2 = loadImage("obstacle2.png");
-  obstacle3 = loadImage("obstacle3.png");
-  obstacle4 = loadImage("obstacle4.png");
-  obstacle5 = loadImage("obstacle5.png");
-  obstacle6 = loadImage("obstacle6.png");
+  obs1 = loadImage("obstacle1.png");
+  obs2 = loadImage("obstacle2.png");
+  obs3 = loadImage("obstacle3.png");
+  obs4 = loadImage("obstacle4.png");
+  obs5 = loadImage("obstacle5.png");
+  obs6 = loadImage("obstacle6.png");
 
   restartImg = loadImage("restart.png");
   gameOverImg = loadImage("gameOver.png");
@@ -44,16 +44,16 @@ function setup(){
   
 
   //crear sprite del suelo
-  ground = createSprite(200,180,400,20);
-  ground.addImage("ground", ImagenSuelo);
+  suelo = createSprite(200,180,400,20);
+  suelo.addImage("suelo", ImagenSuelo);
 
   //crear sprite del suelo invisible
   sueloInvisible = createSprite(200,190,400,10);
   sueloInvisible.visible = false; //cambiar la visibilidad del sprite para que sea falso y asi no verla
 
   //crear grupos de obstaculos y nubes
-  obstaclesGroup = new Group(); //asi de crea el grupo para los obstaculos
-  cloudsGroup = new Group(); //asi de crea el grupo para las nube
+  GrupoObstaculos = new Group(); //asi de crea el grupo para los obstaculos
+  GrupoNubes = new Group(); //asi de crea el grupo para las nube
 
   restart = createSprite(300,140);
   restart.addImage(restartImg);
@@ -67,91 +67,80 @@ function setup(){
 
 function draw(){
   background("white"); //para poner el color de fondo
-  text("Puntuación " + score, 500, 50); //asi creamos el texto en el juego  
+  text("Puntuación " + puntos, 500, 50); //asi creamos el texto en el juego  
 
   //Estados de juego
-  if(gameState === PLAY){ //condicion para poder crear el estado del juego PLAY (jugar)
-    ground.velocityX = -(6 + score/100); //mover el suelo
+  if(EstadoJuego === JUGAR){ //condicion para poder crear el estado del juego PLAY (jugar)
+    suelo.velocityX = -(6 + puntos/100); //mover el suelo
 
     //generar puntuación
-    score = score + Math.round(getFrameRate() / 60); //FrameRate se usa para obtener los frames por segundo, lo cual hace que la puntuacion sea lenta
-    if(score > 0 && score % 100 === 0){ //con esta condición checamos que en puntación sea mayor a 0 y que puntuacion obtengamos cada 100 frames lo cual nos ayudara con el sonido
+    puntos = puntos + Math.round(getFrameRate() / 60); //FrameRate se usa para obtener los frames por segundo, lo cual hace que la puntuacion sea lenta
+    if(puntos > 0 && puntos % 100 === 0){ //con esta condición checamos que en puntación sea mayor a 0 y que puntuacion obtengamos cada 100 frames lo cual nos ayudara con el sonido
       checkSound.play(); //play nos ayuda a reproducir el sonido cuando se indique
     }
 
     //reiniciar el suelo
-    if(ground.x < 0){
-      ground.x = ground.width/2;
+    if(suelo.x < 0){
+      suelo.x = suelo.width/2;
     }
 
   //salto del trex
-  if(keyDown("space") && trex.y >= 160){
+  if(keyDown("space") && trex.y >= 160){ //condición para detectar el salto con el keyDown
     trex.velocityY = -10;
-    jumpSound.play();
+    jumpSound.play(); //sonido de salto
   }
   //caida/gravedad del trex
   trex.velocityY = trex.velocityY + 0.5;
+  
+  MostrarNubes();//llamado de la función de nubes
 
-  //llamado de la función de nubes
-    spawnClouds();
-
-    //llamado de la función de obstaculos
-      spawnObstacles();
+  MostrarObstaculos();//llamado de la función de obstaculos
 
 //cambiar el estado a game over
-  if(obstaclesGroup.isTouching(trex)){
-    gameState = END;
-    dieSound.play();
+  if(GrupoObstaculos.isTouching(trex)){ //condicion para cuando el grupo de obstaculos es tocado por el dino
+    EstadoJuego = FIN; //cambiamos el juego a fin
+    dieSound.play(); //reproducir el sonido de muerte
   }
 
-  gameOver.visible = false;
-  restart.visible = false;
-
+  gameOver.visible = false; //esconder la imagen del Game Over
+  restart.visible = false; //esconder la imagen del Restart
   }
-  else if(gameState === END){
+  else if(EstadoJuego === FIN){ //condicion para cambiar el juego el juego a Fin que es el Game Over
     //detener el suelo
-    ground.velocityX = 0;
-    trex.velocityY = 0;
+    suelo.velocityX = 0; //cambiamos la velocidad a 0 al suelo
+    trex.velocityY = 0; //cambiamos la velocidad a 0 del dino
 
-    obstaclesGroup.setVelocityXEach(0);
-    cloudsGroup.setVelocityXEach(0);
+    GrupoObstaculos.setVelocityXEach(0); //detenemos la velocidad del grupo de obstaculos
+    GrupoNubes.setVelocityXEach(0); //detenemos la velocidad del grupo de nubes 
 
     gameOver.visible = true;
     restart.visible = true;
 
     //cambiar la animación del Trex
-    trex.changeAnimation("collided", trex_colision);
+    trex.changeAnimation("collided", trex_colision); 
 
-    //establecer lifetime de los objetos para que no sean destruidos
-    obstaclesGroup.setLifetimeEach(-1);
-    cloudsGroup.setLifetimeEach(-1);
+    //establecer lifetime de los obstaculos y nubes para que no sean destruidos despues del fin del juego
+    GrupoObstaculos.setLifetimeEach(-1);  
+    GrupoNubes.setLifetimeEach(-1);
 
     if(mousePressedOver(restart)){
       reset();
     }
   }
 
-  //console.log(trex.y);
-
-
- 
-
-
   //evitar que el trex caiga
   trex.collide(sueloInvisible);
-
-
 
   drawSprites();
 }
 
-function spawnClouds(){
+function MostrarNubes(){
   if(frameCount % 60 === 0){ 
   nube = createSprite(600, 100, 40, 10);
   nube.addImage(ImagenNube);
   nube.y = Math.round(random(10,60))
   nube.scale = 0.4;
-  nube.velocityX = -(6 + score/100);
+  nube.velocityX = -(6 + puntos/100);
 
   //ajustar la profundidad
   nube.depth = trex.depth;
@@ -161,29 +150,29 @@ function spawnClouds(){
   nube.lifetime = 210;
 
   //agregar cada nube al grupo
-  cloudsGroup.add(nube);
+  GrupoNubes.add(nube);
   }
 }
 
-function spawnObstacles(){
+function MostrarObstaculos(){
   if(frameCount % 60 === 0){
     obstaculo = createSprite(600, 165, 10, 40);
-    obstaculo.velocityX = -(6 + score/100);
+    obstaculo.velocityX = -(6 + puntos/100);
 
     //generar obstáculos al azar
     var rand = Math.round(random(1,6));
     switch(rand){
-      case 1: obstaculo.addImage(obstacle1);
+      case 1: obstaculo.addImage(obs1);
       break;
-      case 2: obstaculo.addImage(obstacle2);
+      case 2: obstaculo.addImage(obs2);
       break
-      case 3: obstaculo.addImage(obstacle3);
+      case 3: obstaculo.addImage(obs3);
       break
-      case 4: obstaculo.addImage(obstacle4);
+      case 4: obstaculo.addImage(obs4);
       break
-      case 5: obstaculo.addImage(obstacle5);
+      case 5: obstaculo.addImage(obs5);
       break
-      case 6: obstaculo.addImage(obstacle6);
+      case 6: obstaculo.addImage(obs6);
       break
       default: break;
     }
@@ -192,18 +181,18 @@ function spawnObstacles(){
     obstaculo.lifetime = 210;
 
     //agregar cada obstáculo al grupo
-    obstaclesGroup.add(obstaculo);
+    GrupoObstaculos.add(obstaculo);
   }
 }
 
 function reset(){
-  gameState = PLAY;
+  EstadoJuego = JUGAR;
   gameOver.visible = false;
   restart.visible = false;
 
-  obstaclesGroup.destroyEach();
-  cloudsGroup.destroyEach();
+  GrupoObstaculos.destroyEach();
+  GrupoNubes.destroyEach();
 
   trex.changeAnimation("running", trex_running);
-  score = 0;
+  puntos = 0;
 }
